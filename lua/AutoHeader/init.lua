@@ -26,7 +26,7 @@ function M.setup(opts)
   end
 
   if config.opts.default_map == true then
-    vim.keymap.set("n", "<F1>", ":AutoHeader<CR>", { silent = true, noremap = true })
+    vim.keymap.set("n", "<F2>", "<cmd>AutoHeader<CR>", { silent = true, noremap = true })
   end
 end
 
