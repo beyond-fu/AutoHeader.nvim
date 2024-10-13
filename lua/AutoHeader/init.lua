@@ -14,10 +14,6 @@ function M.setup(opts)
       nested = true,
       group = custom,
       callback = function()
-        -- local header = main.gen_header()
-        -- if main.has_header(header) then
-        --   main.update_header(header)
-        -- end
         if main.has_header() then
           main.update_header()
         end
@@ -26,7 +22,7 @@ function M.setup(opts)
   end
 
   if config.opts.default_map == true then
-    vim.keymap.set("n", "<F2>", "<cmd>AutoHeader<CR>", { silent = true, noremap = true })
+    vim.keymap.set("n", "<F4>", "<cmd>AutoHeader<CR>", { silent = true, noremap = true, desc = "Insert AutoHeader" })
   end
 end
 
