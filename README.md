@@ -10,5 +10,6 @@
 ## 🚀 Showcase
 
 `C` file:
-
+![example_c](https://github.com/beyond-fu/AutoHeader.nvim/blob/main/img/example_c.png)
 `Systemverilog` file:
+![example_sv](https://github.com/beyond-fu/AutoHeader.nvim/blob/main/img/example_sv.png)
