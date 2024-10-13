@@ -31,15 +31,13 @@ function M.comment_symbols()
   if vim.tbl_contains({ "c", "cc", "cpp", "cxx", "tpp", "systemverilog", "verilog" }, vim.bo.filetype) then
     str = "/* %s */"
   end
+  if vim.tbl_contains({ "systemverilog", "verilog" }, vim.bo.filetype) then
+    str = "// %s"
+  end
 
   -- Checks the buffer has a valid commentstring.
   if str:find "%%s" then
     local left, right = str:match "(.*)%%s(.*)"
-
-    if right == "" then
-      right = left
-    end
-
     return vim.trim(left), vim.trim(right)
   end
 
@@ -48,31 +46,43 @@ end
 
 ---Generate a formatted text line for the header.
 ---@param text string: The text to include in the line.
----@return string: The formatted header line.
+---@return string: The formatted header line. Confirm no redundant spaces is inserted in case they cannot
+---be deleted by formatter automatically.
 function M.gen_line(text)
   local max_length = config.opts.length - config.opts.margin * 2
 
   text = (text):sub(1, max_length)
 
   local left, right = M.comment_symbols()
-  local left_margin = (" "):rep(config.opts.margin - #left)
+  local asymmetry = (right == "")
+  local left_margin = (asymmetry and text == "") and "" or (" "):rep(config.opts.margin - #left)
   local right_margin = (" "):rep(config.opts.margin - #right)
   local spaces = (" "):rep(max_length - #text)
+  local line_content = left .. left_margin .. text
 
-  return left .. left_margin .. text .. spaces .. right_margin .. right
+  if asymmetry then
+    return line_content
+  else
+    return line_content .. spaces .. right_margin .. right
+  end
 end
 
 ---Generate a complete header.
 ---@return table: A table ontaining all lines of header.
 function M.gen_header()
   local left, right = M.comment_symbols()
-  local fill_line = left .. " " .. string.rep("*", config.opts.length - #left - #right - 2) .. " " .. right
+  local fill_line
+  if right == "" then
+    fill_line = left .. " " .. string.rep("*", config.opts.length - #left - 1)
+  else
+    fill_line = left .. " " .. string.rep("*", config.opts.length - #left - #right - 2) .. " " .. right
+  end
   local empty_line = M.gen_line ""
   local date = os.date "%Y/%m/%d %H:%M:%S"
 
   local header = {
     fill_line,
-    empty_line,
+    -- empty_line,
     M.gen_line(recognize_text),
   }
   if config.opts.copyright then
@@ -91,7 +101,7 @@ function M.gen_header()
   table.insert(header, M.gen_line("Updated time: " .. date .. " by " .. M.user()))
   if config.opts.description then
     table.insert(header, M.gen_line "")
-    table.insert(header, M.gen_line "Description: ")
+    table.insert(header, M.gen_line "Description:")
   end
   if config.opts.license then
     table.insert(header, M.gen_line "")
@@ -106,7 +116,7 @@ end
 ---Checks if there is a valid header in the current buffer.
 ---@return boolean: `true` if the header exists, `false` otherwise.
 function M.has_header()
-  local line = vim.api.nvim_buf_get_lines(0, 2, 3, false)
+  local line = vim.api.nvim_buf_get_lines(0, 1, 2, false)
 
   if string.find(line[1], recognize_text) then
     return true
@@ -132,9 +142,8 @@ function M.insert_header()
 end
 
 ---Update an existing header in the current buffer.
----@param header table: Header to override the current one.
 function M.update_header()
-  local update_line = config.opts.copyright and 10 or 9
+  local update_line = config.opts.copyright and 9 or 8
   local date = os.date "%Y/%m/%d %H:%M:%S"
   local gen_update_line = M.gen_line("Updated time: " .. date .. " by " .. M.user())
 
